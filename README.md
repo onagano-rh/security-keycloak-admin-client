@@ -6,46 +6,15 @@ QuarkusにはKeycloakの管理REST APIのJava用クライアントである keyc
 
 Quarkusを使わない場合でもAPIの使い方を試すのに便利である。
 
-# Keycloakの準備
-
-事前にKeycloakを起動しておき必要な設定を済ませておく。
-
-TODO: QuarkusのDev Servicesによるコンテナ版Keycloakの自動起動は設定していないので別途起動しておく必要がある。
-
-1. ポート8081で起動する
-
-   ```
-   bin/kc.sh start-dev --http-port=8081
-   ```
-
-2. レルム "quarkus" を作成する
-
-3. クライアント "quarkus-client" を作成する
-
-   このときコンフィデンシャルクライアントにしてサービスアカウントを有効にする。
-
-   - Client authentication: On
-   - Service accounts roles: Checked
-
-   このクライアントを用いて接続するので生成されたクライアントシークレットを控えておく。
-
-4. Service accounts rolesタブでrealm-managementクライアントの "realm-admin" ロールを付与する
-
-   管理REST APIを使用するには適切な権限が必要になる。
-   "realm-admin" よりも弱い必要十分な権限で済ませるのがよい。
-
-# Dev modeで起動
-
+# 起動する
+```sh
+./mvnw quarkus:dev
 ```
-./mvnw quarkus:dev -Dquarkus.keycloak.admin-client.client-secret=<生成されたクライアントシークレット>
-```
+このプロジェクトは、8080ポートを待ち受けるREST APIアプリケーションとして起動する。
+`http://localhost:8080/api/admin/roles`へのGETリクエストを受け付けると、設定されたKeycloakへアクセスし、レルムロールの一覧を返却するように実装している。([RolesResource.java](src/main/java/org/acme/keycloak/admin/client/RolesResource.java)参照)
 
-クライアントシークレットは [application.properties](src/main/resources/application.properties) に直接設定してもよい。
-
-[RolesResource.java](src/main/java/org/acme/keycloak/admin/client/RolesResource.java) にて /api/admin/roles のパスで
-レルム "quarkus" のレルムロールの一覧を返すようにコーディングしている。
-
-```
+curlでの要求例
+```sh
 $ curl -s http://localhost:8080/api/admin/roles | jq .
 [
   {
@@ -83,6 +52,57 @@ $ curl -s http://localhost:8080/api/admin/roles | jq .
   }
 ]
 ```
+
+このプロジェクトは、デフォルトでQuarkusのKeycloak DevServicesを利用するように構成しているため、あらかじめKeycloakを用意しなくても、自動的にコンテナ版のKeycloakを起動し確認が行える。
+
+Keycloak DevServicesを利用し`application.properties`の`quarkus.keycloak.devservices.xxxxx`と、`realm.json`に従ってKeycloakが構成されるように設定している。
+
+自身で用意したKeycloakに接続したい場合は以下の設定をfalseに変更し、`quarkus.keycloak.admin-client.xxxxx`設定を用意したKeycloakに合わせて更新する。
+```sh
+quarkus.keycloak.devservices.enabled=false
+```
+
+# 自身でKeycloakを準備する例
+
+事前にKeycloakを起動しておき必要な設定を済ませておく。
+
+1. ポート8081で起動する
+
+   ```sh
+   bin/kc.sh start-dev --http-port=8081
+   ```
+
+2. レルム "quarkus" を作成する
+
+3. クライアント "quarkus-client" を作成する
+
+   このときコンフィデンシャルクライアントにしてサービスアカウントを有効にする。
+
+   - Client authentication: On
+   - Service accounts roles: Checked
+
+   このクライアントを用いて接続するので生成されたクライアントシークレットを控えておく。
+
+4. Service accounts rolesタブでrealm-managementクライアントの "realm-admin" ロールを付与する
+
+   管理REST APIを使用するには適切な権限が必要になる。
+   "realm-admin" よりも弱い必要十分な権限で済ませるのがよい。
+
+5. Keycloak DevServicesを無効にする  
+    application.propertiesにて以下の設定をfalseに変更する。
+    ```sh
+    quarkus.keycloak.devservices.enabled=false
+    ```
+
+6. 用意したKeycloakに合わせて設定を行う
+    application.perpertiesの`quarkus.keycloak.admin-client.xxxxx`設定を用意したKeycloakに合わせて更新する。
+
+6. Dev modeで起動
+    ```sh
+    ./mvnw quarkus:dev -Dquarkus.keycloak.admin-client.client-secret=<生成されたクライアントシークレット>
+    ```
+    クライアントシークレットは [application.properties](src/main/resources/application.properties) に直接設定してもよい。
+
 
 # Links
 

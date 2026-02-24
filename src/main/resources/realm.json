@@ -1,0 +1,31 @@
+{
+  "realm": "quarkus",
+  "enabled": true,
+  "users": [
+    {
+      "username": "service-account-squarkus-client",
+      "enabled": true,
+      "totp": false,
+      "emailVerified": false,
+      "serviceAccountClientId": "quarkus-client",
+      "clientRoles": {
+        "realm-management": ["realm-admin"]
+      }
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "quarkus-client",
+      "enabled": true,
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "secret": "secret",
+      "redirectUris": [
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": [
+        "*"
+      ]
+    }
+  ]
+}
